@@ -1,0 +1,193 @@
+---
+title: "data_cleaning"
+author: "Ethan"
+date: "4/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r libraries_raw, message=FALSE, warning=FALSE}
+
+library(readxl)
+library(sf)
+library(janitor)
+library(readr)
+library(tidyverse)
+
+df_raw <- read_excel("data/2021_01_06_Climate Vulnerability Composite Score_MASTER FILE.xlsx", 
+    sheet = "Composite (exp+vul) score", 
+    col_types = c("text", "numeric", "numeric", 
+        "numeric", "skip", "numeric", "numeric", 
+        "skip", "skip", "skip", "skip", "skip", 
+        "skip"))
+
+
+exposure_raw <- read_excel("data/2021_01_06_Climate Vulnerability Composite Score_MASTER FILE.xlsx", 
+    sheet = "Composite (exposure only)", 
+    col_types = c("text", "skip", "numeric", 
+        "numeric", "skip", "skip", "numeric", 
+        "skip", "skip", "numeric", "skip", 
+        "skip", "skip"))
+
+vul_raw <- read_excel("data/2021_01_06_Climate Vulnerability Composite Score_MASTER FILE.xlsx", 
+    sheet = "Social Vulnerability", col_types = c("text", 
+        "skip", "numeric", "skip", "skip", 
+        "skip"))
+
+bg_raw <- st_read("data/shape_files/tl_2019_48_bg.shp", stringsAsFactors = FALSE)
+bg_raw <-st_transform(bg_raw,"+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+ej_raw <- read_csv("data/EJSCREEN_2020_USPR.csv")
+
+ej_columns_raw <- read_excel("data/2020_EJSCREEEN_columns-explained.xlsx", 
+    col_types = c("skip", "text", "text"))
+
+car_ownership_raw <- read_csv("data/ACSDT5Y2019.B25046_data_with_overlays_2021-05-14T114405.csv", 
+    col_types = cols(NAME = col_skip(), B25046_001M = col_skip(), 
+        B25046_002E = col_skip(), B25046_002M = col_skip(), 
+        B25046_003E = col_skip(), B25046_003M = col_skip()))
+
+
+car_perhousehold_raw <- read_csv("data/ACSDT5Y2019.B25044_data_with_overlays_2021-05-13T103710.csv", 
+    col_types = cols(NAME = col_skip(), B25044_001M = col_skip(), 
+        B25044_002M = col_skip(), B25044_003M = col_skip(), 
+        B25044_004M = col_skip(), B25044_005M = col_skip(), 
+        B25044_006M = col_skip(), B25044_007M = col_skip(), 
+        B25044_008M = col_skip(), B25044_009M = col_skip(), 
+        B25044_010M = col_skip(), B25044_011M = col_skip(), 
+        B25044_012M = col_skip(), B25044_013M = col_skip(), 
+        B25044_014M = col_skip(), B25044_015M = col_skip()))
+```
+
+
+
+```{r carownership}
+
+car <- car_ownership_raw
+
+colnames(car) <- as.character(unlist(car[1,]))
+car = car[-1, ]
+
+
+car$id <- substring(car$id, 10)
+car$`Estimate!!Aggregate number of vehicles available:`[car$`Estimate!!Aggregate number of vehicles available:` == "null"] <- 0
+car$`Estimate!!Aggregate number of vehicles available:` <- as.numeric(car$`Estimate!!Aggregate number of vehicles available:`)
+```
+
+```{r carhousehold}
+
+car_household <- car_perhousehold_raw
+colnames(car_household) <- as.character(unlist(car_household[1,]))
+car_household  = car_household[-1, ]
+car_household$id <- substring(car_household$id, 10)
+car_household$`Estimate!!Total:!!Owner occupied:!!No vehicle available` <- as.numeric(car_household$`Estimate!!Total:!!Owner occupied:!!No vehicle available`)
+car_household$`Estimate!!Total:!!Renter occupied:!!No vehicle available` <- as.numeric(car_household$`Estimate!!Total:!!Renter occupied:!!No vehicle available`)
+car_household$`Estimate!!Total:` <- as.numeric(car_household$`Estimate!!Total:`)
+car_household$`No Car` <- car_household$`Estimate!!Total:!!Owner occupied:!!No vehicle available` + car_household$`Estimate!!Total:!!Renter occupied:!!No vehicle available`
+car_household$`Percent of households without a car` <- car_household$`No Car`/car_household$`Estimate!!Total:`
+
+car_household <- car_household %>% select(id,`Percent of households without a car` )
+
+```
+
+```{r}
+
+#Minor Cleaning
+df <- df_raw[1:640, ]
+
+df$`SVI+Flood`[is.na(df$`SVI+Flood`)] <- 0
+
+ej_columns <- ej_columns_raw[-2, ]
+
+new_columns <- ej_columns$Description
+
+ej <- ej_raw
+
+colnames(ej) <- new_columns
+
+ej$`Percentile for Ozone level in air` <- as.numeric(ej$`Percentile for Ozone level in air`)
+ej$`Percentile for Ozone level in air` <- ej$`Percentile for Ozone level in air`*0.01
+ej$`Percentile for PM2.5 level in air`<- as.numeric(ej$`Percentile for PM2.5 level in air`)
+ej$`Percentile for PM2.5 level in air` <- ej$`Percentile for PM2.5 level in air`*0.01
+
+
+#merging 
+df <-
+    df %>%
+    left_join(bg_raw, by = c("GEOID_" = "GEOID")) %>%
+    left_join(ej, by = c("GEOID_" = "Census FIPS code for block group")) %>%
+    left_join(exposure_raw, by = "GEOID_") %>%
+    left_join(vul_raw, by = c("GEOID_" = "ID_Blk_Grp")) %>%
+    left_join(car, by = c("GEOID_" = "id")) %>% 
+    left_join(car_household, by = c("GEOID_" = "id")) %>% 
+    rename(
+        "Composite Climate Hazard Exposure" = "Norm_Composite (Norm)",
+        "Social Vulnerability Score" = "SVI Score (0-1)",
+        "Climate Exposure and Climate Vulnerability" = "Norm_COMPOSITE (v1)",
+        "Aggregate Vehicles" = "Estimate!!Aggregate number of vehicles available:"
+    ) %>%
+    select(
+        GEOID_,
+        "Flood Exposure (norm)",
+        "Wildfire Exposure (Norm)",
+        "Heat Exposure (Norm",
+        "Composite Climate Hazard Exposure",
+        "Social Vulnerability Score",
+        "Climate Exposure and Climate Vulnerability",
+        "Percentile for Ozone level in air" ,
+        "Percentile for PM2.5 level in air",
+        "Total population",
+        "% people of color",
+        "% low-income",
+        "Aggregate Vehicles",
+        "Percent of households without a car",
+        geometry
+        
+    ) 
+
+
+df$`Average Vehicles per person` <- df$`Aggregate Vehicles` / df$`Total population`
+
+df <- df %>% select(-c("Aggregate Vehicles"))
+df$`Average Vehicles per person`[df$`Average Vehicles per person` == 0] <- 0.5
+
+
+geometry <- select(df,
+                   GEOID_,
+                   geometry,
+                   "Total population",
+                   "% people of color",
+                   "% low-income",
+)
+df <-
+    df %>% 
+    select(GEOID_, "Average Vehicles per person", "Percent of households without a car", everything()) %>% 
+    mutate(across(everything(), as.character)) %>%
+    pivot_longer(cols = 2:11,
+                 names_to = "var",
+                 values_to = "value") %>%
+    select(GEOID_, var, value) %>% 
+    left_join(geometry)
+
+
+
+df$value <- as.numeric(df$value)
+
+df$value[is.na(df$value)] <- 0
+
+df$var[df$var == "Climate Exposure and Climate Vulnerability"] <- "Climate Exposure and Population Sensitivity"
+df$var[df$var == "Composite Climate Hazard Exposure"] <- "Composite Climate Exposure"
+df$var[df$var == "Social Vulnerability Score"] <- "Population Sensitivity"
+df$var[df$var == "Heat Exposure (Norm"] <- "Heat Exposure (Norm)"
+
+saveRDS(df, "data/austin_composite.rds")
+
+```
