@@ -378,7 +378,7 @@ server <- function(input, output, session) {
   # colorRamp(c("#1645AA","#ffffff", "#FF0D07"), interpolate = "spline"),
   #Color Palette for Map
   pal <- reactive({
-    colorNumeric(palette = "RdYlBu",
+    colorNumeric(palette = "RdBu",
                  n = 10,
                  reverse = TRUE,
                  domain = variable()$value)
@@ -399,7 +399,7 @@ server <- function(input, output, session) {
         weight = 1,
         smoothFactor = 0.5,
         opacity = 1.0,
-        fillOpacity = 0.5,
+        fillOpacity = 0.7,
         fillColor = ~ pal()(variable()$value),
         highlightOptions = highlightOptions(
           color = "white",
