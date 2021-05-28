@@ -167,7 +167,8 @@ border-top-color:#453781;
         padding: 0 15px;
         overflow: hidden;
         color: black;
-      }
+}
+.dropdown-header .text { font-weight: bold }
 '
         )
       )
@@ -195,11 +196,37 @@ tabItems(
                 height = "100px",
                 solidHeader = TRUE,
                 status = "warning",
-                selectInput("var",
-                            NULL,
-                            choices = var_choices,
-                            selected = "Composite Climate Exposure")
-                
+                pickerInput("var",label = NULL, width= '100%',inline=FALSE,
+                            options = list(
+                              `actions-box` = TRUE,
+                              size = 10),
+                            choices = 
+                              list(
+                                "Environmental Measures" = list(
+                                  "Wildfire Exposure",
+                                  "Heat Exposure",
+                                  "Multihazard Exposure",
+                                  "Population Sensitivity",
+                                  "Climate Exposure and Population Sensitivity",
+                                  "Average Impervious Cover",
+                                  "Average Tree Cover"),
+                                "Air Pollution" = list(
+                                  "CO",
+                                  "NO2",
+                                  "SO2",
+                                  "O3",
+                                  "Percentile for Ozone level in air",
+                                  "PM2.5",
+                                  "Percentile for PM2.5 level in air" ,
+                                  "PM10"),
+                                "Demograpic Information" = list(
+                                  "Total population",
+                                  "% people of color",
+                                  "% low-income",
+                                  "Average Vehicles per person",
+                                  "Percent of households without a car")
+                                ),
+                            selected = "Climate Exposure and Population Sensitivity")
               ),
               valueBox(
                 "1,342,588",

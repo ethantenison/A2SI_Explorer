@@ -161,28 +161,26 @@ df <-
     left_join(rcm, by = c("GEOID_" = "fips")) %>%
     left_join(bg, by = c("GEOID_" = "GEOID")) %>% 
     rename(
-        "Composite Climate Hazard Exposure" = "Norm_Composite (Norm)",
+        "Multihazard Exposure" = "Norm_Composite (Norm)",
         "Social Vulnerability Score" = "SVI Score (0-1)",
         "Climate Exposure and Climate Vulnerability" = "Norm_COMPOSITE (v1)",
         "Aggregate Vehicles" = "Estimate!!Aggregate number of vehicles available:",
+        "Wildfire Exposure" = "Wildfire Exposure (Norm)",
+        "Heat Exposure" = "Heat Exposure (Norm",
         "CO" = "co",
         "NO2" = "no2",
         "O3" = "o3",
         "PM10" = "pm10",
-        "PM25" = "pm25",
+        "PM2.5" = "pm25",
         "SO2" = "so2",
         "Average Impervious Cover" = "Avg_Imperv",
-      #  Count,
-       # Count_Tree,
-        "Average Tree Cover" = "Avg_Tree"#,
-        #Index
+        "Average Tree Cover" = "Avg_Tree"
     ) %>%
     select(
         GEOID_,
-        "Flood Exposure (norm)",
-        "Wildfire Exposure (Norm)",
-        "Heat Exposure (Norm",
-        "Composite Climate Hazard Exposure",
+        "Wildfire Exposure",
+        "Heat Exposure",
+        "Multihazard Exposure",
         "Social Vulnerability Score",
         "Climate Exposure and Climate Vulnerability",
         "Percentile for Ozone level in air" ,
@@ -194,19 +192,12 @@ df <-
         "Percent of households without a car",
         "CO",
         "NO2",
+        "SO2",
         "O3",
         "PM10",
-        "PM25",
-        "SO2",
-        "NH3 Damage ($)",
-        "NOx Damage ($)",
-        "PM25 Damage ($)",
-        "SO2 Damage ($)",
+        "PM2.5",
         "Average Impervious Cover",
-        Count,
-        Count_Tree,
         "Average Tree Cover",
-        Index,
         geometry
         
     )
@@ -235,7 +226,7 @@ df <-
         everything()
     ) %>%
     mutate(across(everything(), as.character)) %>%
-    pivot_longer(cols = 2:29,
+    pivot_longer(cols = 2:21,
                  names_to = "var",
                  values_to = "value") %>%
     select(GEOID_, var, value) %>%
@@ -249,11 +240,17 @@ df$value[is.na(df$value)] <- 0
 
 df$var[df$var == "Climate Exposure and Climate Vulnerability"] <-
     "Climate Exposure and Population Sensitivity"
-df$var[df$var == "Composite Climate Hazard Exposure"] <-
-    "Composite Climate Exposure"
+
 df$var[df$var == "Social Vulnerability Score"] <-
     "Population Sensitivity"
-df$var[df$var == "Heat Exposure (Norm"] <- "Heat Exposure (Norm)"
+
+#The airport is skewing the visualizations
+df$value[df$var == "PM2.5" & df$value == 0] <- 8
+df$value[df$var == "PM10" & df$value == 0] <- 22
+df$value[df$var == "CO" & df$value == 0] <- 0.2
+df$value[df$var == "NO2" & df$value == 0] <- 3
+df$value[df$var == "SO2" & df$value == 0] <- 0.9
+df$value[df$var == "O3" & df$value == 0] <- 43
 
 saveRDS(df, "data/austin_composite.rds")
 
