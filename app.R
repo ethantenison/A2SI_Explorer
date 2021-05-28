@@ -121,44 +121,44 @@ ui = shinydashboard::dashboardPage(
         HTML(
           '
 .box {margin: 0px;}
-.box.box.box-primary>.box-header {
-  background:#fff
-                    }
-
-.box.box.box-primary{
-border-bottom-color:#29AF7F;
-border-left-color:#29AF7F;
-border-right-color:#29AF7F;
-border-top-color:#29AF7F;
-}
-.box.box-solid.box-primary>.box-header {
-  background:#29AF7F;
-                    }
-
-.box.box-solid.box-primary{
-border-bottom-color:#29AF7F;
-border-left-color:#29AF7F;
-border-right-color:#29AF7F;
-border-top-color:#29AF7F;
-}
-
-
-.box.box-solid.box-warning>.box-header {
-  background:#453781;
-                    }
-
-.box.box-solid.box-warning{
-background:#453781;
-border-bottom-color:#453781;
-border-left-color:#453781;
-border-right-color:#453781;
-border-top-color:#453781;
-}
-
-
-.small-box.bg-green { background-color: #29AF7F !important; color: #ffffff !important; }
-.small-box.bg-yellow { background-color: #DCE319 !important; color: #000000 !important; }
-.small-box.bg-purple { background-color: #453781!important; color: #ffffff !important; }
+# .box.box.box-primary>.box-header {
+#   background:#fff
+#                     }
+# 
+# .box.box.box-primary{
+# border-bottom-color:#29AF7F;
+# border-left-color:#29AF7F;
+# border-right-color:#29AF7F;
+# border-top-color:#29AF7F;
+# }
+# .box.box-solid.box-primary>.box-header {
+#   background:#29AF7F;
+#                     }
+# 
+# .box.box-solid.box-primary{
+# border-bottom-color:#29AF7F;
+# border-left-color:#29AF7F;
+# border-right-color:#29AF7F;
+# border-top-color:#29AF7F;
+# }
+# 
+# 
+# .box.box-solid.box-warning>.box-header {
+#   background:#453781;
+#                     }
+# 
+# .box.box-solid.box-warning{
+# background:#453781;
+# border-bottom-color:#453781;
+# border-left-color:#453781;
+# border-right-color:#453781;
+# border-top-color:#453781;
+# }
+# 
+# 
+# .small-box.bg-green { background-color: #29AF7F !important; color: #ffffff !important; }
+# .small-box.bg-yellow { background-color: #DCE319 !important; color: #000000 !important; }
+# .small-box.bg-purple { background-color: #453781!important; color: #ffffff !important; }
 .myClass {
         font-size: 20px;
         line-height: 50px;
@@ -195,7 +195,8 @@ tabItems(
                 width = 4,
                 height = "100px",
                 solidHeader = TRUE,
-                status = "warning",
+                status = "success",
+                background = "green",
                 pickerInput("var",label = NULL, width= '100%',inline=FALSE,
                             options = list(
                               `actions-box` = TRUE,
@@ -231,7 +232,7 @@ tabItems(
               valueBox(
                 "1,342,588",
                 "Total Population",
-                color = "green",
+                color = "blue",
                 icon = icon("users")
               ),
               valueBoxOutput("highrisk")
@@ -375,7 +376,7 @@ server <- function(input, output, session) {
       setView(lng = -97.74,
               lat = 30.30,
               zoom = 10)  %>%
-      addProviderTiles(providers$Esri.WorldGrayCanvas) %>%
+      addProviderTiles(providers$CartoDB.Positron) %>%
       htmlwidgets::onRender("function(el, x) {
         L.control.zoom({ position: 'topright' }).addTo(this)
     }")
@@ -397,7 +398,7 @@ server <- function(input, output, session) {
       format(total, big.mark = ","),
       paste0("Population above 0.8    ", input$var),
       icon = icon("exclamation-circle"),
-      color = "yellow"
+      color = "red"
     )
   })
   
