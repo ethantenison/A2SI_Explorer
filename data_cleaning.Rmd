@@ -239,7 +239,7 @@ df$value <- as.numeric(df$value)
 df$value[is.na(df$value)] <- 0
 
 df$var[df$var == "Climate Exposure and Climate Vulnerability"] <-
-    "Climate Exposure and Population Sensitivity"
+    "Multihazard Exposure and Population Sensitivity"
 
 df$var[df$var == "Social Vulnerability Score"] <-
     "Population Sensitivity"

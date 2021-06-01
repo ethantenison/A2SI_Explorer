@@ -78,7 +78,7 @@ ui = shinydashboard::dashboardPage(
   sidebar = shinydashboard::dashboardSidebar(
     useShinyjs(),
     shinyjs::extendShinyjs(text = jsToggleFS, functions = "toggleFullScreen"),
-    collapsed = FALSE,
+    collapsed = TRUE,
     sidebarMenu(
       id = "tabs",
       menuItem(
@@ -169,6 +169,10 @@ ui = shinydashboard::dashboardPage(
         color: black;
 }
 .dropdown-header .text { font-weight: bold }
+.dataTables_filter {
+display: none;
+}
+
 '
         )
       )
@@ -191,7 +195,7 @@ tabItems(
               style = 'padding:25px;padding-left:17px;',
               offset = 0,
               shinydashboard::box(
-                title = "Select a Variable to Visualize",
+                title = "Select a Variable",
                 width = 4,
                 height = "100px",
                 solidHeader = TRUE,
@@ -208,10 +212,10 @@ tabItems(
                                   "Heat Exposure",
                                   "Multihazard Exposure",
                                   "Population Sensitivity",
-                                  "Climate Exposure and Population Sensitivity",
+                                  "Multihazard Exposure and Population Sensitivity",
                                   "Average Impervious Cover",
                                   "Average Tree Cover"),
-                                "Air Pollution" = list(
+                                "Air Pollutants" = list(
                                   "CO",
                                   "NO2",
                                   "SO2",
@@ -227,7 +231,7 @@ tabItems(
                                   "Average Vehicles per person",
                                   "Percent of households without a car")
                                 ),
-                            selected = "Climate Exposure and Population Sensitivity")
+                            selected = "Multihazard Exposure and Population Sensitivity")
               ),
               valueBox(
                 "1,342,588",
@@ -261,11 +265,12 @@ tabItems(
               offset = 0,
               fluidRow(
                 shinydashboard::box(
-                  title = textOutput("distribution"),
+                  title = "Variable Information",#textOutput("distribution"),
                   width = 12,
                   solidHeader = FALSE,
                   status = "primary",
-                  plotlyOutput("violin", height = "245px")
+                  dataTableOutput("varinfo")
+                  #plotlyOutput("violin", height = "245px")
                   
                 )
               ),
@@ -416,6 +421,27 @@ server <- function(input, output, session) {
   #Definition Table
   output$definitions <- renderDataTable(definitions)
   
+  #Variable info table
+  varinfo_reactive <- reactive({
+    def <- filter(definitions, Variable == input$var)
+     def <- t(def)
+     colnames(def) <- " "
+     def
+  })
+  
+  output$varinfo <- DT::renderDataTable({
+    DT::datatable(
+      varinfo_reactive(),
+      escape = FALSE,
+      options = list(
+        lengthChange = FALSE,
+        info = FALSE,
+        paging = FALSE,
+        ordering = FALSE
+      )
+    )
+  })
+  
   
   #Map attributes to display
   observe({
@@ -484,9 +510,26 @@ server <- function(input, output, session) {
   })
   
   #Violin Plot header
-  output$distribution <-
+  # output$distribution <-
+  #   renderText({
+  #     paste0(input$var, " Distribution")
+  #   })
+  
+  output$name <-
     renderText({
-      paste0(input$var, " Distribution")
+      paste0("Variable Name:    ", input$var)
+    })
+  
+  output$def <-
+    renderText({
+      def <- filter(definitions, Variable == input$var)
+      paste0("Definition:    ", def[[2]])
+    })
+  
+  output$source <-
+    renderText({
+      def <- filter(definitions, Variable == input$var)
+      paste0("Source:    ", def[[3]])
     })
   
   #Data for barplot
@@ -525,7 +568,7 @@ server <- function(input, output, session) {
     plot_ly(
       x = bar()$x,
       y = bar()$y,
-      color = I("#29AF7F"),
+      color = I("#00a65a"),
       type = 'bar'
       
     ) %>%
@@ -540,7 +583,14 @@ server <- function(input, output, session) {
       paste0(input$var, " By Major Demographic Groups")
     })
   
+  #pop up on launch 
+  query_modal <- modalDialog(
+    title = "Important message",
+    includeMarkdown("tooltips/intro.md"),
+    easyClose = F
+  )
   
+  showModal(query_modal)
   
 }
 
