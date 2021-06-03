@@ -21,6 +21,7 @@ library(DT)
 library(plotly)
 library(shinydashboard)
 library(shinydashboardPlus)
+library(ggmap)
 
 # ------------------------------- #
 # ------------------------------- #
@@ -93,17 +94,13 @@ ui = shinydashboard::dashboardPage(
         icon = icon("book")
       ),
       conditionalPanel(condition = "input.tabs == 'definitions'"),
-      menuItem(
-        "About A2SI",
-        tabName = "about",
-        icon = icon("question")
-      ),
+      menuItem("About",
+               tabName = "about",
+               icon = icon("question")),
       conditionalPanel(condition = "input.tabs == 'about'"),
-      menuItem(
-        "Attributions",
-        tabName = "attributions",
-        icon = icon("users")
-      ),
+      menuItem("Attributions",
+               tabName = "attributions",
+               icon = icon("users")),
       conditionalPanel(condition = "input.tabs == 'attributions'"),
       hr(style = "margin-top: 5px; margin-bottom: 5px; width:90%"),
       HTML(
@@ -124,7 +121,7 @@ ui = shinydashboard::dashboardPage(
 # .box.box.box-primary>.box-header {
 #   background:#fff
 #                     }
-# 
+#
 # .box.box.box-primary{
 # border-bottom-color:#29AF7F;
 # border-left-color:#29AF7F;
@@ -134,19 +131,19 @@ ui = shinydashboard::dashboardPage(
 # .box.box-solid.box-primary>.box-header {
 #   background:#29AF7F;
 #                     }
-# 
+#
 # .box.box-solid.box-primary{
 # border-bottom-color:#29AF7F;
 # border-left-color:#29AF7F;
 # border-right-color:#29AF7F;
 # border-top-color:#29AF7F;
 # }
-# 
-# 
+#
+#
 # .box.box-solid.box-warning>.box-header {
 #   background:#453781;
 #                     }
-# 
+#
 # .box.box-solid.box-warning{
 # background:#453781;
 # border-bottom-color:#453781;
@@ -154,8 +151,8 @@ ui = shinydashboard::dashboardPage(
 # border-right-color:#453781;
 # border-top-color:#453781;
 # }
-# 
-# 
+#
+#
 # .small-box.bg-green { background-color: #29AF7F !important; color: #ffffff !important; }
 # .small-box.bg-yellow { background-color: #DCE319 !important; color: #000000 !important; }
 # .small-box.bg-purple { background-color: #453781!important; color: #ffffff !important; }
@@ -187,107 +184,138 @@ tags$script(
   )
 ),
 tabItems(
-  tabItem(tabName = "data",
-          
-          fluidRow(
-            column(
-              width = 12,
-              style = 'padding:25px;padding-left:17px;',
-              offset = 0,
-              shinydashboard::box(
-                title = "Select a Variable",
-                width = 4,
-                height = "100px",
-                solidHeader = TRUE,
-                status = "success",
-                background = "green",
-                pickerInput("var",label = NULL, width= '100%',inline=FALSE,
-                            options = list(
-                              `actions-box` = TRUE,
-                              size = 10),
-                            choices = 
-                              list(
-                                "Environmental Measures" = list(
-                                  "Wildfire Exposure",
-                                  "Heat Exposure",
-                                  "Multihazard Exposure",
-                                  "Population Sensitivity",
-                                  "Multihazard Exposure and Population Sensitivity",
-                                  "Average Impervious Cover",
-                                  "Average Tree Cover"),
-                                "Air Pollutants" = list(
-                                  "CO",
-                                  "NO2",
-                                  "SO2",
-                                  "O3",
-                                  "Percentile for Ozone level in air",
-                                  "PM2.5",
-                                  "Percentile for PM2.5 level in air" ,
-                                  "PM10"),
-                                "Demograpic Information" = list(
-                                  "Total population",
-                                  "% people of color",
-                                  "% low-income",
-                                  "Average Vehicles per person",
-                                  "Percent of households without a car")
-                                ),
-                            selected = "Multihazard Exposure and Population Sensitivity")
+  tabItem(
+    tabName = "data",
+    
+    fluidRow(
+      column(
+        width = 12,
+        style = 'padding:25px;padding-left:17px;',
+        offset = 0,
+        shinydashboard::box(
+          title = "Select a Variable",
+          width = 4,
+          height = "100px",
+          solidHeader = TRUE,
+          status = "success",
+          background = "green",
+          pickerInput(
+            "var",
+            label = NULL,
+            width = '100%',
+            inline = FALSE,
+            options = list(`actions-box` = TRUE,
+                           size = 10),
+            choices =
+              list(
+                "Environmental Measures" = list(
+                  "Wildfire Exposure",
+                  "Heat Exposure",
+                  "Multihazard Exposure",
+                  "Population Sensitivity",
+                  "Multihazard Exposure and Population Sensitivity",
+                  "Average Impervious Cover",
+                  "Average Tree Cover"
+                ),
+                "Air Pollutants" = list(
+                  "CO",
+                  "NO2",
+                  "SO2",
+                  "O3",
+                  "Percentile for Ozone level in air",
+                  "PM2.5",
+                  "Percentile for PM2.5 level in air" ,
+                  "PM10"
+                ),
+                "Demograpic Information" = list(
+                  "Total population",
+                  "% people of color",
+                  "% low-income",
+                  "Average Vehicles per person",
+                  "Percent of households without a car"
+                )
               ),
-              valueBox(
-                "1,342,588",
-                "Total Population",
-                color = "blue",
-                icon = icon("users")
-              ),
-              valueBoxOutput("highrisk")
-            )
+            selected = "Multihazard Exposure and Population Sensitivity"
+          )
+        ),
+        valueBox(
+          "1,342,588",
+          "Total Population",
+          color = "blue",
+          icon = icon("users")
+        ),
+        valueBoxOutput("highrisk")
+      )
+    ),
+    fluidRow(
+      column(
+        width = 8,
+        style = 'padding:25px;padding-top:0px;padding-left:30px;',
+        offset = 0,
+        fluidRow(
+          shinydashboard::box(
+            title = "Austin Area by Census Block Group",
+            width = 12,
+            solidHeader = FALSE,
+            status = "primary",
+            leafletOutput("bg", height = 600)
+            
+          )
+        )
+        
+      ),
+      column(
+        width = 4,
+        style = 'padding-left:25px; padding-top:0px; padding-right:42px;',
+        offset = 0,
+        fluidRow(
+          shinydashboard::box(
+            title = "Variable Information",
+            width = 12,
+            solidHeader = FALSE,
+            status = "primary",
+            dataTableOutput("varinfo")
+            
+          )
+        ),
+        br(),
+        br(),
+        fluidRow(
+          shinydashboard::box(
+            title = textOutput("demographic"),
+            width = 12,
+            solidHeader = FALSE,
+            status = "primary",
+            plotlyOutput("barplot", height = "245px")
+            
+          )
+        )
+      )
+    ),
+    fluidRow(
+      column(
+        width = 8,
+        style = 'padding:25px;padding-left:17px;',
+        offset = 0,
+        shinydashboard::box(
+          title = "Data for your address",
+          width = 12,
+          solidHeader = FALSE,
+          status = "primary",
+          searchInput(
+            inputId = "search",
+            label = "Click search icon to update or hit 'Enter'",
+            placeholder = "A placeholder",
+            value = "110 Jacob Fontaine Ln, Austin, TX",
+            btnSearch = icon("search"),
+            btnReset = icon("remove"),
+            width = "100%"
           ),
-          fluidRow(
-            column(
-              width = 8,
-              style = 'padding:25px;padding-top:0px;padding-left:30px;',
-              offset = 0,
-              fluidRow(
-                shinydashboard::box(
-                  title = "Austin Area by Census Block Group",
-                  width = 12,
-                  solidHeader = FALSE,
-                  status = "primary",
-                  leafletOutput("bg", height = 600)
-                  
-                )
-              )
-              
-            ),
-            column(
-              width = 4,
-              style = 'padding-left:25px; padding-top:0px; padding-right:42px;',
-              offset = 0,
-              fluidRow(
-                shinydashboard::box(
-                  title = "Variable Information",#textOutput("distribution"),
-                  width = 12,
-                  solidHeader = FALSE,
-                  status = "primary",
-                  dataTableOutput("varinfo")
-                  #plotlyOutput("violin", height = "245px")
-                  
-                )
-              ),
-              br(),
-              br(),
-              fluidRow(
-                shinydashboard::box(
-                  title = textOutput("demographic"),
-                  width = 12,
-                  solidHeader = FALSE,
-                  status = "primary",
-                  plotlyOutput("barplot", height = "245px")
-                  
-                )
-              )
-            )
-          )),
+          verbatimTextOutput(outputId = "address_coord")
+        )
+      )
+    )
+  ),
   tabItem(tabName = "definitions",
           fluidRow(
             shinydashboard::box(
@@ -299,63 +327,73 @@ tabItems(
             ),
             
           )),
-  tabItem(tabName = "about",
-          fluidRow(
-            shinydashboard::box(
-              title = "Goals of this Project",
-              width = 6,
-              solidHeader = FALSE,
-              status = "primary",
-            ),
-            shinydashboard::box(
-              title = "About A2SI",
-              width = 6,
-              solidHeader = FALSE,
-              status = "primary",
-            ),
-            
-          )),
-  tabItem(tabName = "attributions",
-          fluidRow(
-            userBox(
-              title = userDescription(
-                title= "Phoebe Romero",
-                subtitle = "Environmental Program Coordinator",
-                image = "",
-                type = 2),
-              status = "primary",
-              ""
-            ),
-            userBox(
-              title = userDescription(
-                title= "Marc Coudert",
-                subtitle = "Environmental Conservation Program Manager",
-                image = "",
-                type = 2),
-              status = "primary",
-              "")
-            ),
-          br(),
-          br(),
-          fluidRow(
-            userBox(
-              title = userDescription(
-                title= "Ethan Tenison",
-                subtitle = "Project Manager for RGK Data Initiaves",
-                image = "images/ethan.jpg",
-                type = 2),
-              status = "primary",
-              "Ethan manages and evaluates the RGK Center's data initiatives at the University of Texas at Austin. He holds a masters degree in Global Policy Studies from the LBJ School of Public Affairs specializing in Data Science for Policy Analysis."),
-            userBox(
-              title = userDescription(
-                title= "Patrick Bixler",
-                subtitle = "Assistant Professor",
-                image = "",
-                type = 2),
-              status = "primary",
-              ""
-            )
-          ))
+  tabItem(
+    tabName = "about",
+    fluidRow(
+      shinydashboard::box(
+        title = "Goals of this Project",
+        width = 6,
+        solidHeader = FALSE,
+        status = "primary",
+      ),
+      shinydashboard::box(
+        title = "About A2SI",
+        width = 6,
+        solidHeader = FALSE,
+        status = "primary",
+      ),
+      
+    )
+  ),
+  tabItem(
+    tabName = "attributions",
+    fluidRow(
+      userBox(
+        title = userDescription(
+          title = "Phoebe Romero",
+          subtitle = "Environmental Program Coordinator",
+          image = "",
+          type = 2
+        ),
+        status = "primary",
+        ""
+      ),
+      userBox(
+        title = userDescription(
+          title = "Marc Coudert",
+          subtitle = "Environmental Conservation Program Manager",
+          image = "",
+          type = 2
+        ),
+        status = "primary",
+        ""
+      )
+    ),
+    br(),
+    br(),
+    fluidRow(
+      userBox(
+        title = userDescription(
+          title = "Ethan Tenison",
+          subtitle = "Project Manager for RGK Data Initiaves",
+          image = "images/ethan.jpg",
+          type = 2
+        ),
+        status = "primary",
+        "Ethan manages and evaluates the RGK Center's data initiatives at the University of Texas at Austin. He holds a masters degree in Global Policy Studies from the LBJ School of Public Affairs specializing in Data Science for Policy Analysis."
+      ),
+      userBox(
+        title = userDescription(
+          title = "Patrick Bixler",
+          subtitle = "Assistant Professor",
+          image = "",
+          type = 2
+        ),
+        status = "primary",
+        ""
+      )
+    )
+  )
 )
   )
 )
@@ -408,13 +446,15 @@ server <- function(input, output, session) {
   })
   
   
-  # colorRamp(c("#1645AA","#ffffff", "#FF0D07"), interpolate = "spline"),
+
   #Color Palette for Map
   pal <- reactive({
-    colorNumeric(palette = "RdBu",
-                 n = 10,
-                 reverse = TRUE,
-                 domain = variable()$value)
+    colorNumeric(
+      palette = "RdBu",
+      n = 10,
+      reverse = TRUE,
+      domain = variable()$value
+    )
   })
   
   
@@ -424,9 +464,9 @@ server <- function(input, output, session) {
   #Variable info table
   varinfo_reactive <- reactive({
     def <- filter(definitions, Variable == input$var)
-     def <- t(def)
-     colnames(def) <- " "
-     def
+    def <- t(def)
+    colnames(def) <- " "
+    def
   })
   
   output$varinfo <- DT::renderDataTable({
@@ -509,12 +549,6 @@ server <- function(input, output, session) {
     
   })
   
-  #Violin Plot header
-  # output$distribution <-
-  #   renderText({
-  #     paste0(input$var, " Distribution")
-  #   })
-  
   output$name <-
     renderText({
       paste0("Variable Name:    ", input$var)
@@ -583,14 +617,28 @@ server <- function(input, output, session) {
       paste0(input$var, " By Major Demographic Groups")
     })
   
-  #pop up on launch 
-  query_modal <- modalDialog(
-    title = "Important message",
-    includeMarkdown("tooltips/intro.md"),
-    easyClose = F
-  )
+  #pop up on launch
+  query_modal <- modalDialog(title = "Important message",
+                             includeMarkdown("tooltips/intro.md"),
+                             easyClose = F)
   
   showModal(query_modal)
+  
+  
+  #Address Look up
+  
+  output$address_coord <- renderPrint({
+    register_google(key = "", day_limit = 100000)
+    lonlat <- geocode(location = input$search, output = "latlona")
+    spatial_point <-
+      st_as_sf(lonlat, coords = c("lon", "lat"), crs = 4326)
+    lonlat <- paste0(lonlat[1], ", ", lonlat[2])
+    censusblock_tovisualize <- st_join(spatial_point, variable())
+    print(paste0(input$var, ": ", censusblock_tovisualize[['value']]))
+    print(paste0(input$var, "average: ", mean(censusblock_tovisualize[['value']])))
+  })
+  
+  
   
 }
 
